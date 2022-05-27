@@ -22,11 +22,14 @@ import org.gradle.api.Project;
 import org.gradle.api.Transformer;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
+import org.gradle.api.artifacts.ExternalModuleDependency;
+import org.gradle.api.artifacts.FileCollectionDependency;
 import org.gradle.api.artifacts.MinimalExternalModuleDependency;
 import org.gradle.api.artifacts.ModuleDependency;
 import org.gradle.api.artifacts.ProjectDependency;
-import org.gradle.api.artifacts.dsl.DependencyHandler;
-import org.gradle.api.internal.artifacts.dsl.dependencies.DependencyFactory;
+import org.gradle.api.artifacts.dsl.DependencyProvider;
+import org.gradle.api.file.FileCollection;
+import org.gradle.api.internal.artifacts.dsl.dependencies.DependencyFactoryInternal;
 import org.gradle.api.internal.catalog.DependencyBundleValueSource;
 import org.gradle.api.internal.provider.DefaultValueSourceProviderFactory;
 import org.gradle.api.model.ObjectFactory;
@@ -42,6 +45,7 @@ import org.gradle.internal.component.external.model.ProjectTestFixtures;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.gradle.internal.component.external.model.TestFixturesSupport.TEST_FIXTURES_CAPABILITY_APPENDIX;
@@ -61,7 +65,7 @@ public class DefaultJvmComponentDependencies implements JvmComponentDependencies
     }
 
     @Inject
-    protected DependencyHandler getDependencyHandler() {
+    protected DependencyFactoryInternal getDependencyFactory() {
         throw new UnsupportedOperationException();
     }
 
@@ -69,15 +73,86 @@ public class DefaultJvmComponentDependencies implements JvmComponentDependencies
     protected ObjectFactory getObjectFactory() {
         throw new UnsupportedOperationException();
     }
-
     @Override
-    public void implementation(Object dependency) {
-        implementation(dependency, null);
+    public void implementation(String dependencyNotation) {
+        doAddEager(implementation, getDependencyFactory().fromCharSequence(dependencyNotation), null);
     }
 
     @Override
-    public void implementation(Object dependency, @Nullable Action<? super Dependency> configuration) {
-        doAdd(implementation, dependency, configuration);
+    public void implementation(String dependencyNotation, Action<? super ExternalModuleDependency> configuration) {
+        doAddEager(implementation, getDependencyFactory().fromCharSequence(dependencyNotation), dependency -> configuration.execute((ExternalModuleDependency) dependency));
+    }
+
+    @Override
+    public void implementation(Map<String, ?> dependencyNotation) {
+        doAddEager(implementation, getDependencyFactory().fromMap(dependencyNotation), null);
+    }
+
+    @Override
+    public void implementation(Map<String, ?> dependencyNotation, Action<? super ExternalModuleDependency> configuration) {
+        doAddEager(implementation, getDependencyFactory().fromMap(dependencyNotation), dependency -> configuration.execute((ExternalModuleDependency) dependency));
+    }
+
+    @Override
+    public void implementation(Project dependencyNotation) {
+        doAddEager(implementation, getDependencyFactory().fromProject(dependencyNotation), null);
+    }
+
+    @Override
+    public void implementation(Project dependencyNotation, Action<? super ProjectDependency> configuration) {
+        doAddEager(implementation, getDependencyFactory().fromProject(dependencyNotation), dependency -> configuration.execute((ProjectDependency) dependency));
+    }
+
+    @Override
+    public void implementation(FileCollection dependencyNotation) {
+        doAddEager(implementation, getDependencyFactory().fromFileCollection(dependencyNotation), null);
+    }
+
+    @Override
+    public void implementation(FileCollection dependencyNotation, Action<? super FileCollectionDependency> configuration) {
+        doAddEager(implementation, getDependencyFactory().fromFileCollection(dependencyNotation), dependency -> configuration.execute((FileCollectionDependency) dependency));
+    }
+
+    @Override
+    public void implementation(Provider<? extends MinimalExternalModuleDependency> dependencyNotation) {
+        doAddLazy(implementation, getDependencyFactory().fromMinimal(dependencyNotation), null);
+    }
+
+    @Override
+    public void implementation(Provider<? extends MinimalExternalModuleDependency> dependencyNotation, Action<? super ExternalModuleDependency> configuration) {
+        doAddLazy(implementation, getDependencyFactory().fromMinimal(dependencyNotation), dependency -> configuration.execute((ExternalModuleDependency) dependency));
+    }
+
+    @Override
+    public void implementation(ProviderConvertible<? extends MinimalExternalModuleDependency> dependencyNotation) {
+        implementation(dependencyNotation.asProvider());
+    }
+
+    @Override
+    public void implementation(ProviderConvertible<? extends MinimalExternalModuleDependency> dependencyNotation, Action<? super ExternalModuleDependency> configuration) {
+        implementation(dependencyNotation.asProvider(), configuration);
+    }
+
+    @Override
+    public void implementation(Dependency dependencyNotation) {
+        doAddEager(implementation, dependencyNotation, null);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public <D extends Dependency> void implementation(D dependencyNotation, Action<? super D> configuration) {
+        doAddEager(implementation, dependencyNotation, dependency -> configuration.execute((D) dependency));
+    }
+
+    @Override
+    public void implementation(DependencyProvider<?> dependencyNotation) {
+        doAddLazy(implementation, dependencyNotation, null);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public <D extends Dependency> void implementation(DependencyProvider<? extends D> dependencyNotation, Action<? super D> configuration) {
+        doAddLazy(implementation, dependencyNotation, dependency -> configuration.execute((D) dependency));
     }
 
     @Override
@@ -112,21 +187,21 @@ public class DefaultJvmComponentDependencies implements JvmComponentDependencies
 
     @Override
     public Dependency gradleApi() {
-        return getDependencyHandler().create(DependencyFactory.ClassPathNotation.GRADLE_API);
+        return getDependencyFactory().createDependency(DependencyFactoryInternal.ClassPathNotation.GRADLE_API);
     }
 
     @Override
     public Dependency gradleTestKit() {
-        return getDependencyHandler().create(DependencyFactory.ClassPathNotation.GRADLE_TEST_KIT);
+        return getDependencyFactory().createDependency(DependencyFactoryInternal.ClassPathNotation.GRADLE_TEST_KIT);
     }
 
     @Override
     public Dependency localGroovy() {
-        return getDependencyHandler().create(DependencyFactory.ClassPathNotation.LOCAL_GROOVY);
+        return getDependencyFactory().createDependency(DependencyFactoryInternal.ClassPathNotation.LOCAL_GROOVY);
     }
-    
+
     public Dependency testFixtures(Project project) {
-        final ProjectDependency projectDependency = (ProjectDependency) getDependencyHandler().create(project);
+        final ProjectDependency projectDependency = getDependencyFactory().fromProject(project);
         return testFixtures(projectDependency);
     }
 
@@ -191,7 +266,7 @@ public class DefaultJvmComponentDependencies implements JvmComponentDependencies
     }
 
     private Dependency create(Object dependency, @Nullable Action<? super Dependency> configuration) {
-        final Dependency created = getDependencyHandler().create(dependency);
+        final Dependency created = getDependencyFactory().createDependency(dependency);
         if (configuration != null) {
             configuration.execute(created);
         }
