@@ -28,7 +28,7 @@ import org.gradle.internal.classloader.FilteringClassLoader
 import org.gradle.internal.file.FileAccessTimeJournal
 import org.gradle.internal.hash.Hasher
 import org.gradle.internal.io.ClassLoaderObjectInputStream
-import org.gradle.internal.upgrade.report.ApiUpgradeManager
+import org.gradle.internal.upgrade.report.ApiUpgradeReporterFactory
 import org.gradle.test.fixtures.concurrent.ConcurrentSpec
 import org.gradle.test.fixtures.file.TestFile
 import org.gradle.test.fixtures.file.TestNameTestDirectoryProvider
@@ -65,7 +65,7 @@ class DefaultCachedClasspathTransformerTest extends ConcurrentSpec {
     def fileSystemAccess = TestFiles.fileSystemAccess()
     def globalCacheLocations = Stub(GlobalCacheLocations)
     def fileLockManager = Stub(FileLockManager)
-    def apiUpgradeManager = Stub(ApiUpgradeManager)
+    def apiUpgradeManager = Stub(ApiUpgradeReporterFactory)
     URLClassLoader testClassLoader = null
 
     @Subject
