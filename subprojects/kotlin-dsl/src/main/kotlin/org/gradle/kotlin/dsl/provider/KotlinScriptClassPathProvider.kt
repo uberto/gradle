@@ -153,7 +153,16 @@ class KotlinScriptClassPathProvider(
             "$scope must be locked before it can be used to compute a classpath!"
         }
         val exportedClassPath = cachedClassLoaderClassPath.of(scope.exportClassLoader)
-        return DefaultClassPath.of(exportedClassPath - gradleImplementationClassPath)
+        val cp = mutableSetOf<File>()
+        exportedClassPath.forEach { file ->
+            if (file.isFile) {
+                val predicate: (File) -> Boolean = { it.name == file.name }
+                if (cp.none(predicate) && gradleImplementationClassPath.none(predicate)) {
+                    cp += file
+                }
+            }
+        }
+        return DefaultClassPath.of(cp)
     }
 
     private

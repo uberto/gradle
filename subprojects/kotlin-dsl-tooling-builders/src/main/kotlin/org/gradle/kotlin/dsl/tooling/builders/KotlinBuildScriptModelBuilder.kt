@@ -210,7 +210,7 @@ fun precompiledScriptPluginModelBuilder(
 ) = KotlinScriptTargetModelBuilder(
     scriptFile = scriptFile,
     project = modelRequestProject,
-    scriptClassPath = DefaultClassPath.of(enclosingSourceSet.sourceSet.compileClasspath),
+    scriptClassPath = DefaultClassPath.of(enclosingSourceSet.sourceSet.compileClasspath.files.deduplicateByFilename()),
     enclosingScriptProjectDir = enclosingSourceSet.project.projectDir,
     additionalImports = {
         enclosingSourceSet.project.precompiledScriptPluginsMetadataDir.run {
@@ -222,6 +222,18 @@ fun precompiledScriptPluginModelBuilder(
         }
     }
 )
+
+
+private
+fun Set<File>.deduplicateByFilename(): Set<File> {
+    val uniqueFilenames = mutableSetOf<File>()
+    forEach { file ->
+        if (!file.isFile || uniqueFilenames.none { it.name == file.name }) {
+            uniqueFilenames += file
+        }
+    }
+    return uniqueFilenames
+}
 
 
 private
@@ -424,7 +436,6 @@ data class KotlinScriptTargetModelBuilder(
     private
     fun gradleSource() =
         SourcePathProvider.sourcePathFor(
-            scriptClassPath,
             scriptFile,
             rootDir,
             gradleHomeDir,
