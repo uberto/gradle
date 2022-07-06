@@ -122,3 +122,9 @@ classycle {
 }
 
 testFilesCleanup.reportOnly.set(true)
+
+tasks.compileKotlin {
+    kotlinOptions {
+        freeCompilerArgs += "-Xjvm-default=all-compatibility"
+    }
+}

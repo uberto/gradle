@@ -16,6 +16,7 @@
 
 package org.gradle.kotlin.dsl.support
 
+import org.gradle.api.JavaVersion
 import org.gradle.internal.SystemProperties
 import org.gradle.internal.io.NullOutputStream
 
@@ -51,6 +52,7 @@ import org.jetbrains.kotlin.config.JVMConfigurationKeys.OUTPUT_DIRECTORY
 import org.jetbrains.kotlin.config.JVMConfigurationKeys.RETAIN_OUTPUT_IN_MEMORY
 import org.jetbrains.kotlin.config.JvmAnalysisFlags
 import org.jetbrains.kotlin.config.JvmDefaultMode
+import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.JvmTarget.JVM_1_8
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersion
@@ -93,6 +95,7 @@ import kotlin.script.experimental.jvm.JvmGetScriptingClass
 
 fun compileKotlinScriptModuleTo(
     outputDirectory: File,
+    jvmTarget: JavaVersion,
     moduleName: String,
     scriptFiles: Collection<String>,
     scriptDef: ScriptDefinition,
@@ -101,6 +104,7 @@ fun compileKotlinScriptModuleTo(
     pathTranslation: (String) -> String
 ) = compileKotlinScriptModuleTo(
     outputDirectory,
+    jvmTarget,
     moduleName,
     scriptFiles,
     scriptDef,
@@ -139,6 +143,7 @@ fun scriptDefinitionFromTemplate(
 internal
 fun compileKotlinScriptToDirectory(
     outputDirectory: File,
+    jvmTarget: JavaVersion,
     scriptFile: File,
     scriptDef: ScriptDefinition,
     classPath: List<File>,
@@ -147,6 +152,7 @@ fun compileKotlinScriptToDirectory(
 
     compileKotlinScriptModuleTo(
         outputDirectory,
+        jvmTarget,
         "buildscript",
         listOf(scriptFile.path),
         scriptDef,
@@ -161,6 +167,7 @@ fun compileKotlinScriptToDirectory(
 private
 fun compileKotlinScriptModuleTo(
     outputDirectory: File,
+    jvmTarget: JavaVersion,
     moduleName: String,
     scriptFiles: Collection<String>,
     scriptDef: ScriptDefinition,
@@ -169,7 +176,7 @@ fun compileKotlinScriptModuleTo(
 ) {
     withRootDisposable {
         withCompilationExceptionHandler(messageCollector) {
-            val configuration = compilerConfigurationFor(messageCollector).apply {
+            val configuration = compilerConfigurationFor(messageCollector, jvmTarget).apply {
                 put(RETAIN_OUTPUT_IN_MEMORY, false)
                 put(OUTPUT_DIRECTORY, outputDirectory)
                 setModuleName(moduleName)
@@ -206,6 +213,7 @@ object HasImplicitReceiverCompilerPlugin {
 internal
 fun compileToDirectory(
     outputDirectory: File,
+    jvmTarget: JavaVersion,
     moduleName: String,
     sourceFiles: Iterable<File>,
     logger: Logger,
@@ -214,7 +222,7 @@ fun compileToDirectory(
 
     withRootDisposable {
         withMessageCollectorFor(logger) { messageCollector ->
-            val configuration = compilerConfigurationFor(messageCollector).apply {
+            val configuration = compilerConfigurationFor(messageCollector, jvmTarget).apply {
                 addKotlinSourceRoots(sourceFiles.map { it.canonicalPath })
                 put(OUTPUT_DIRECTORY, outputDirectory)
                 setModuleName(moduleName)
@@ -261,6 +269,7 @@ inline fun <T> withCompilationExceptionHandler(messageCollector: LoggingMessageC
             log.isDebugEnabled -> {
                 loggingOutputTo(log::debug) { action() }
             }
+
             else -> {
                 ignoringOutputOf { action() }
             }
@@ -338,12 +347,22 @@ class LoggingOutputStream(val log: (String) -> Unit) : OutputStream() {
 
 
 private
-fun compilerConfigurationFor(messageCollector: MessageCollector): CompilerConfiguration =
+fun compilerConfigurationFor(messageCollector: MessageCollector, jvmTarget: JavaVersion): CompilerConfiguration =
     CompilerConfiguration().apply {
         put(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY, messageCollector)
-        put(JVM_TARGET, JVM_1_8)
+        // TODO this must be part of the cache key
+        // TODO this must be 1_8 for the generated API jar
+        put(JVM_TARGET, jvmTarget.toKotlinJvmTarget())
         put(CommonConfigurationKeys.LANGUAGE_VERSION_SETTINGS, gradleKotlinDslLanguageVersionSettings)
     }
+
+
+internal
+fun JavaVersion.toKotlinJvmTarget(): JvmTarget {
+    // JvmTarget.fromString(JavaVersion.majorVersion) works starting with Java 9
+    // Gradle requires Java >=8 to run so no need to support previous versions
+    return JvmTarget.fromString(majorVersion) ?: JVM_1_8
+}
 
 
 private
@@ -503,6 +522,7 @@ class LoggingMessageCollector(
                 errors += ScriptCompilationError(message, location)
                 log.error { taggedMsg() }
             }
+
             in CompilerMessageSeverity.VERBOSE -> log.trace { msg() }
             CompilerMessageSeverity.STRONG_WARNING -> log.info { taggedMsg() }
             CompilerMessageSeverity.WARNING -> log.info { taggedMsg() }

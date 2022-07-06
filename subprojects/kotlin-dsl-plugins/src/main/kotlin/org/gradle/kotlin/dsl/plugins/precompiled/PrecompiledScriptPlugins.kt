@@ -15,15 +15,18 @@
  */
 package org.gradle.kotlin.dsl.plugins.precompiled
 
+import org.gradle.api.JavaVersion
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.file.SourceDirectorySet
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.TaskProvider
 
 import org.gradle.kotlin.dsl.*
+import org.gradle.kotlin.dsl.plugins.dsl.KotlinDslPluginOptions
 import org.gradle.kotlin.dsl.provider.PrecompiledScriptPluginsSupport
 import org.gradle.kotlin.dsl.provider.gradleKotlinDslJarsOf
 import org.gradle.kotlin.dsl.support.serviceOf
@@ -51,6 +54,9 @@ class PrecompiledScriptPlugins : Plugin<Project> {
 
     private
     class Target(override val project: Project) : PrecompiledScriptPluginsSupport.Target {
+
+        override val jvmTarget: Provider<JavaVersion> =
+            project.the<KotlinDslPluginOptions>().jvmTarget.map { JavaVersion.toVersion(it) }
 
         override val kotlinSourceDirectorySet: SourceDirectorySet
             get() = project.sourceSets["main"].kotlin
