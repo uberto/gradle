@@ -50,8 +50,8 @@ class TestSuitesDependenciesIntegrationTest extends AbstractIntegrationSpec {
         tasks.register('checkConfiguration') {
             dependsOn test, integTest
             doLast {
-                assert configurations.testCompileClasspath.files*.name == ['commons-lang3-3.11.jar'] : 'commons-lang3 is an implementation dependency for the default test suite'
-                assert configurations.testRuntimeClasspath.files*.name == ['commons-lang3-3.11.jar'] : 'commons-lang3 is an implementation dependency for the default test suite'
+                assert configurations.testCompileClasspath.files*.name.contains('commons-lang3-3.11.jar') : 'commons-lang3 is an implementation dependency for the default test suite'
+                assert configurations.testRuntimeClasspath.files*.name.contains('commons-lang3-3.11.jar') : 'commons-lang3 is an implementation dependency for the default test suite'
                 assert !configurations.integTestCompileClasspath.files*.name.contains('commons-lang3-3.11.jar') : 'default test suite dependencies should not leak to integTest'
                 assert !configurations.integTestRuntimeClasspath.files*.name.contains('commons-lang3-3.11.jar') : 'default test suite dependencies should not leak to integTest'
             }
@@ -89,7 +89,7 @@ class TestSuitesDependenciesIntegrationTest extends AbstractIntegrationSpec {
         tasks.register('checkConfiguration') {
             dependsOn test, integTest
             doLast {
-                assert configurations.testRuntimeClasspath.files*.name == ['commons-lang3-3.11.jar'] : 'commons-lang3 leaks from the production project dependencies'
+                assert configurations.testRuntimeClasspath.files*.name.contains('commons-lang3-3.11.jar') : 'commons-lang3 leaks from the production project dependencies'
                 assert !configurations.integTestRuntimeClasspath.files*.name.contains('commons-lang3-3.11.jar') : 'integTest does not implicitly depend on the production project'
             }
         }
@@ -130,8 +130,8 @@ class TestSuitesDependenciesIntegrationTest extends AbstractIntegrationSpec {
         tasks.register('checkConfiguration') {
             dependsOn test, integTest
             doLast {
-                assert configurations.testCompileClasspath.files*.name == ['commons-lang3-3.11.jar'] : 'commons-lang3 leaks from the production project dependencies'
-                assert configurations.testRuntimeClasspath.files*.name == ['commons-lang3-3.11.jar'] : 'commons-lang3 leaks from the production project dependencies'
+                assert configurations.testCompileClasspath.files*.name.contains('commons-lang3-3.11.jar') : 'commons-lang3 leaks from the production project dependencies'
+                assert configurations.testRuntimeClasspath.files*.name.contains('commons-lang3-3.11.jar') : 'commons-lang3 leaks from the production project dependencies'
                 assert configurations.integTestRuntimeClasspath.files*.name.contains('commons-lang3-3.11.jar') : 'integTest explicitly depends on the production project'
             }
         }
