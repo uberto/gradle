@@ -43,6 +43,7 @@ class KotlinDslWorkspaceProvider(
         inMemoryCacheDecoratorFactory,
         stringInterner,
         classLoaderHasher,
+        3000, // magic number
         2 // scripts and accessors caches sit below the root directory
     )
 

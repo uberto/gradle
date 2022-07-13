@@ -38,6 +38,8 @@ import static com.google.common.collect.Maps.transformValues;
 
 public class DefaultExecutionHistoryStore implements ExecutionHistoryStore {
 
+    public static final int DEFAULT_MAX_ENTRIES_TO_KEEP_IN_MEMORY = 10000;
+
     private final PersistentIndexedCache<String, PreviousExecutionState> store;
 
     public DefaultExecutionHistoryStore(
@@ -46,16 +48,32 @@ public class DefaultExecutionHistoryStore implements ExecutionHistoryStore {
         Interner<String> stringInterner,
         ClassLoaderHierarchyHasher classLoaderHasher
     ) {
+        this(
+            cache,
+            inMemoryCacheDecoratorFactory,
+            stringInterner,
+            classLoaderHasher,
+            DEFAULT_MAX_ENTRIES_TO_KEEP_IN_MEMORY
+        );
+    }
+
+    public DefaultExecutionHistoryStore(
+        Supplier<PersistentCache> cache,
+        InMemoryCacheDecoratorFactory inMemoryCacheDecoratorFactory,
+        Interner<String> stringInterner,
+        ClassLoaderHierarchyHasher classLoaderHasher,
+        int maxEntriesToKeepInMemory
+    ) {
         DefaultPreviousExecutionStateSerializer serializer = new DefaultPreviousExecutionStateSerializer(
             new FileCollectionFingerprintSerializer(stringInterner),
             new FileSystemSnapshotSerializer(stringInterner),
             classLoaderHasher
         );
 
-        CacheDecorator inMemoryCacheDecorator = inMemoryCacheDecoratorFactory.decorator(10000, false);
+        CacheDecorator inMemoryCacheDecorator = inMemoryCacheDecoratorFactory.decorator(maxEntriesToKeepInMemory, false);
         this.store = cache.get().createCache(
             PersistentIndexedCacheParameters.of("executionHistory", String.class, serializer)
-            .withCacheDecorator(inMemoryCacheDecorator)
+                .withCacheDecorator(inMemoryCacheDecorator)
         );
     }
 

@@ -59,6 +59,7 @@ public class DefaultImmutableWorkspaceProvider implements WorkspaceProvider, Clo
             inMemoryCacheDecoratorFactory,
             stringInterner,
             classLoaderHasher,
+            DefaultExecutionHistoryStore.DEFAULT_MAX_ENTRIES_TO_KEEP_IN_MEMORY,
             DEFAULT_FILE_TREE_DEPTH_TO_TRACK_AND_CLEANUP
         );
     }
@@ -69,12 +70,13 @@ public class DefaultImmutableWorkspaceProvider implements WorkspaceProvider, Clo
         InMemoryCacheDecoratorFactory inMemoryCacheDecoratorFactory,
         StringInterner stringInterner,
         ClassLoaderHierarchyHasher classLoaderHasher,
+        int executionHistoryMaxInMemoryEntries,
         int treeDepthToTrackAndCleanup
     ) {
         return new DefaultImmutableWorkspaceProvider(
             cacheBuilder,
             fileAccessTimeJournal,
-            cache -> new DefaultExecutionHistoryStore(() -> cache, inMemoryCacheDecoratorFactory, stringInterner, classLoaderHasher),
+            cache -> new DefaultExecutionHistoryStore(() -> cache, inMemoryCacheDecoratorFactory, stringInterner, classLoaderHasher, executionHistoryMaxInMemoryEntries),
             treeDepthToTrackAndCleanup
         );
     }
