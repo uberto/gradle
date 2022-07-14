@@ -16,11 +16,10 @@
 
 package org.gradle.testing.testsuites.dependencies
 
+import groovy.test.NotYetImplemented
 import org.gradle.integtests.fixtures.AbstractIntegrationSpec
 import org.gradle.integtests.fixtures.ToBeFixedForConfigurationCache
 import org.gradle.test.fixtures.dsl.GradleDsl
-import spock.lang.Ignore
-
 
 class TestSuitesKotlinDSLDependenciesIntegrationTest extends AbstractIntegrationSpec {
     private versionCatalog = file('gradle', 'libs.versions.toml')
@@ -284,7 +283,6 @@ class TestSuitesKotlinDSLDependenciesIntegrationTest extends AbstractIntegration
         'a custom suite'    | 'integTest' | 'val integTest by registering(JvmTestSuite::class)'
     }
 
-    @Ignore("exclude not available yet in Kotlin DSL")
     def 'can add dependencies to other projects with actions (using exclude) to #suiteDesc'() {
         settingsKotlinFile << """
             rootProject.name = "root"
@@ -729,7 +727,7 @@ class TestSuitesKotlinDSLDependenciesIntegrationTest extends AbstractIntegration
         succeeds 'checkConfiguration'
     }
 
-    @Ignore("currently failing in Kotlin, with or without mapOf, due to lack of exclude extension function from DependencyHandlerExtensions")
+    @NotYetImplemented
     def "can add dependency with actions on suite using a #desc"() {
         given:
         buildKotlinFile << """
@@ -995,7 +993,7 @@ class TestSuitesKotlinDSLDependenciesIntegrationTest extends AbstractIntegration
 
         expect:
         fails 'help'
-        result.assertHasErrorOutput("Cannot convert the provided notation to an object of type Dependency: [org.apache.commons:commons-lang3:3.11, com.google.guava:guava:30.1.1-jre].")
+        result.assertHasErrorOutput("None of the following functions can be called with the arguments supplied")
 
         where:
         suiteDesc           | suiteName   | suiteDeclaration
@@ -1081,7 +1079,7 @@ class TestSuitesKotlinDSLDependenciesIntegrationTest extends AbstractIntegration
         succeeds 'checkConfiguration'
     }
 
-    @Ignore("exclude not yet present in Kotlin DSL")
+    @NotYetImplemented
     def 'can add dependency objects with actions (using exclude) to #suiteDesc'() {
         given :
         buildKotlinFile << """
@@ -1216,6 +1214,7 @@ class TestSuitesKotlinDSLDependenciesIntegrationTest extends AbstractIntegration
     // endregion dependencies - dependency objects
 
     // region dependencies - dependency providers
+    @NotYetImplemented
     def 'can add dependency providers which provide dependency objects to the implementation, compileOnly and runtimeOnly configurations of a suite'() {
         given :
         buildKotlinFile << """
@@ -1259,6 +1258,7 @@ class TestSuitesKotlinDSLDependenciesIntegrationTest extends AbstractIntegration
         succeeds 'checkConfiguration'
     }
 
+    @NotYetImplemented
     def 'can add dependency providers which provide GAVs to the implementation, compileOnly and runtimeOnly configurations of a suite'() {
         given :
         buildKotlinFile << """
@@ -1302,7 +1302,7 @@ class TestSuitesKotlinDSLDependenciesIntegrationTest extends AbstractIntegration
         succeeds 'checkConfiguration'
     }
 
-    @Ignore("exclude not yet present in Kotlin DSL")
+    @NotYetImplemented
     def 'can add dependency providers which provide dependency objects with actions (using exclude) to #suiteDesc'() {
         given :
         buildKotlinFile << """
@@ -1346,6 +1346,7 @@ class TestSuitesKotlinDSLDependenciesIntegrationTest extends AbstractIntegration
         'a custom suite'    | 'integTest' | 'val integTest by registering(JvmTestSuite::class)'
     }
 
+    @NotYetImplemented
     def 'can add dependency providers which provide dependency objects with actions (using because) to #suiteDesc - with smart cast'() {
         given :
         buildKotlinFile << """
@@ -1392,7 +1393,7 @@ class TestSuitesKotlinDSLDependenciesIntegrationTest extends AbstractIntegration
         'a custom suite'    | 'integTest' | 'val integTest by registering(JvmTestSuite::class)'
     }
 
-    @Ignore("exclude not yet present in Kotlin DSL")
+    @NotYetImplemented
     def 'can add dependency providers which provide GAVs with actions (using excludes) to #suiteDesc'() {
         given :
         buildKotlinFile << """
@@ -1436,6 +1437,7 @@ class TestSuitesKotlinDSLDependenciesIntegrationTest extends AbstractIntegration
         'a custom suite'    | 'integTest' | 'val integTest by registering(JvmTestSuite::class)'
     }
 
+    @NotYetImplemented
     def 'can add dependency providers which provide GAVs with actions (using excludes) to #suiteDesc - with smart cast'() {
         given :
         buildKotlinFile << """
@@ -1480,6 +1482,7 @@ class TestSuitesKotlinDSLDependenciesIntegrationTest extends AbstractIntegration
         'a custom suite'    | 'integTest' | 'val integTest by registering(JvmTestSuite::class)'
     }
 
+    @NotYetImplemented
     def 'can add dependency providers which provide GAVs with actions (using because) to #suiteDesc'() {
         given :
         buildKotlinFile << """
@@ -1584,7 +1587,6 @@ class TestSuitesKotlinDSLDependenciesIntegrationTest extends AbstractIntegration
         succeeds 'checkConfiguration'
     }
 
-    @Ignore("exclude not yet present in Kotlin DSL")
     def 'can add dependencies via a Version Catalog with actions (using exclude) to #suiteDesc'() {
         given:
         buildKotlinFile << """
@@ -1735,6 +1737,7 @@ class TestSuitesKotlinDSLDependenciesIntegrationTest extends AbstractIntegration
         'a custom suite'    | 'integTest' | 'val integTest by registering(JvmTestSuite::class)'
     }
 
+    @NotYetImplemented
     def 'can add dependencies using a Version Catalog bundle to #suiteDesc'() {
         given:
         buildKotlinFile << """
@@ -1922,7 +1925,7 @@ class TestSuitesKotlinDSLDependenciesIntegrationTest extends AbstractIntegration
     // endregion dependencies - Version Catalog
 
     // region dependencies - platforms
-    @Ignore("platforms not yet available in test suites")
+    @NotYetImplemented
     def "can add a platform dependency to #suiteDesc"() {
         given: "a suite that uses a platform dependency"
         settingsKotlinFile << """
@@ -1998,7 +2001,7 @@ class TestSuitesKotlinDSLDependenciesIntegrationTest extends AbstractIntegration
         'a custom suite'    | 'integTest' | 'val integTest by registering(JvmTestSuite::class)'
     }
 
-    @Ignore("platforms not yet available in test suites")
+    @NotYetImplemented
     def "can add an enforced platform dependency to #suiteDesc"() {
         given: "a suite that uses an enforced platform dependency"
         settingsKotlinFile << """
@@ -2205,7 +2208,6 @@ class TestSuitesKotlinDSLDependenciesIntegrationTest extends AbstractIntegration
     // endregion dependencies - file collections
 
     // region dependencies - self-resolving dependencies
-    @Ignore("self-resolving methods not yet available in test suites")
     def "can add localGroovy dependency to #suiteDesc"() {
         given:
         buildKotlinFile << """
@@ -2248,7 +2250,6 @@ class TestSuitesKotlinDSLDependenciesIntegrationTest extends AbstractIntegration
         'a custom suite'    | 'integTest' | 'val integTest by registering(JvmTestSuite::class)'
     }
 
-    @Ignore("self-resolving methods not yet available in test suites")
     def "can add gradleApi dependency to #suiteDesc"() {
         given:
         buildKotlinFile << """
@@ -2291,7 +2292,6 @@ class TestSuitesKotlinDSLDependenciesIntegrationTest extends AbstractIntegration
         'a custom suite'    | 'integTest' | 'val integTest by registering(JvmTestSuite::class)'
     }
 
-    @Ignore("self-resolving methods not yet available in test suites")
     def "can add gradleTestKit dependency to #suiteDesc"() {
         given:
         buildKotlinFile << """

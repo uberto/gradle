@@ -21,6 +21,7 @@ import org.gradle.api.Action;
 import org.gradle.api.ExtensiblePolymorphicDomainObjectContainer;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ConfigurationContainer;
+import org.gradle.api.artifacts.dsl.DependencyFactory;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
 import org.gradle.api.internal.artifacts.dsl.dependencies.DefaultConfigurationDependencyHandler;
 import org.gradle.api.internal.tasks.AbstractTaskDependency;
@@ -110,7 +111,7 @@ public abstract class DefaultJvmTestSuite implements JvmTestSuite {
     protected abstract Property<VersionedTestingFramework> getVersionedTestingFramework();
 
     @Inject
-    public DefaultJvmTestSuite(String name, ConfigurationContainer configurations, DependencyHandler dependencies, SourceSetContainer sourceSets) {
+    public DefaultJvmTestSuite(String name, ConfigurationContainer configurations, DependencyHandler dependencies, SourceSetContainer sourceSets, DependencyFactory factory) {
         this.name = name;
         this.sourceSet = sourceSets.create(getName());
 
@@ -140,7 +141,7 @@ public abstract class DefaultJvmTestSuite implements JvmTestSuite {
 
         this.dependencies = getObjectFactory().newInstance(
             DefaultJvmComponentDependencies.class,
-            getObjectFactory().newInstance(DefaultConfigurationDependencyHandler.class, implementation),
+            new DefaultConfigurationDependencyHandler(factory, implementation),
             getObjectFactory().newInstance(DefaultConfigurationDependencyHandler.class, compileOnly),
             getObjectFactory().newInstance(DefaultConfigurationDependencyHandler.class, runtimeOnly),
             getObjectFactory().newInstance(DefaultConfigurationDependencyHandler.class, annotationProcessor)

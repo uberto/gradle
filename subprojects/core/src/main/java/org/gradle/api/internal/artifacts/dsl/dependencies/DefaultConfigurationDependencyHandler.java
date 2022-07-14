@@ -28,12 +28,8 @@ import org.gradle.api.artifacts.dsl.ConfigurationDependencyHandler;
 import org.gradle.api.artifacts.dsl.DependencyFactory;
 import org.gradle.api.artifacts.dsl.DependencyProvider;
 import org.gradle.api.file.FileCollection;
-import org.gradle.api.internal.DynamicObjectAware;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.provider.ProviderConvertible;
-import org.gradle.internal.metaobject.BeanDynamicObject;
-import org.gradle.internal.metaobject.DynamicInvokeResult;
-import org.gradle.internal.metaobject.DynamicObject;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;

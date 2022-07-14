@@ -40,7 +40,7 @@ import org.gradle.api.provider.ProviderConvertible
  * @see DependencyFactory.createFromCharSequence
  * @since 7.6
  */
-fun ConfigurationDependencyHandler.invoke(dependencyNotation: CharSequence) = add(dependencyNotation)
+operator fun ConfigurationDependencyHandler.invoke(dependencyNotation: CharSequence) = add(dependencyNotation)
 
 
 /**
@@ -51,7 +51,7 @@ fun ConfigurationDependencyHandler.invoke(dependencyNotation: CharSequence) = ad
  * @see DependencyFactory.createFromCharSequence
  * @since 7.6
  */
-fun ConfigurationDependencyHandler.invoke(dependencyNotation: CharSequence, configuration: Action<in ExternalModuleDependency>) = add(dependencyNotation, configuration)
+operator fun ConfigurationDependencyHandler.invoke(dependencyNotation: CharSequence, configuration: Action<in ExternalModuleDependency>) = add(dependencyNotation, configuration)
 
 
 /**
@@ -61,7 +61,7 @@ fun ConfigurationDependencyHandler.invoke(dependencyNotation: CharSequence, conf
  * @see DependencyFactory.createFromMap
  * @since 7.6
  */
-fun ConfigurationDependencyHandler.invoke(map: Map<String, *>) = add(map)
+operator fun ConfigurationDependencyHandler.invoke(map: Map<String, *>) = add(map)
 
 
 /**
@@ -72,7 +72,7 @@ fun ConfigurationDependencyHandler.invoke(map: Map<String, *>) = add(map)
  * @see DependencyFactory.createFromMap
  * @since 7.6
  */
-fun ConfigurationDependencyHandler.invoke(map: Map<String, *>, configuration: Action<in ExternalModuleDependency>) = add(map, configuration)
+operator fun ConfigurationDependencyHandler.invoke(map: Map<String, *>, configuration: Action<in ExternalModuleDependency>) = add(map, configuration)
 
 
 /**
@@ -81,7 +81,7 @@ fun ConfigurationDependencyHandler.invoke(map: Map<String, *>, configuration: Ac
  * @param project project to add as a dependency
  * @since 7.6
  */
-fun ConfigurationDependencyHandler.invoke(project: Project) = add(project)
+operator fun ConfigurationDependencyHandler.invoke(project: Project) = add(project)
 
 
 /**
@@ -91,7 +91,7 @@ fun ConfigurationDependencyHandler.invoke(project: Project) = add(project)
  * @param configuration an action to configure the dependency
  * @since 7.6
  */
-fun ConfigurationDependencyHandler.invoke(project: Project, configuration: Action<in ProjectDependency>) = add(project, configuration)
+operator fun ConfigurationDependencyHandler.invoke(project: Project, configuration: Action<in ProjectDependency>) = add(project, configuration)
 
 
 /**
@@ -100,7 +100,7 @@ fun ConfigurationDependencyHandler.invoke(project: Project, configuration: Actio
  * @param files files to add as a dependency
  * @since 7.6
  */
-fun ConfigurationDependencyHandler.invoke(files: FileCollection) = add(files)
+operator fun ConfigurationDependencyHandler.invoke(files: FileCollection) = add(files)
 
 
 /**
@@ -110,7 +110,7 @@ fun ConfigurationDependencyHandler.invoke(files: FileCollection) = add(files)
  * @param configuration an action to configure the dependency
  * @since 7.6
  */
-fun ConfigurationDependencyHandler.invoke(files: FileCollection, configuration: Action<in FileCollectionDependency>) = add(files, configuration)
+operator fun ConfigurationDependencyHandler.invoke(files: FileCollection, configuration: Action<in FileCollectionDependency>) = add(files, configuration)
 
 
 /**
@@ -119,26 +119,7 @@ fun ConfigurationDependencyHandler.invoke(files: FileCollection, configuration: 
  * @param externalModule external module to add as a dependency
  * @since 7.6
  */
-fun ConfigurationDependencyHandler.invoke(externalModule: Provider<out MinimalExternalModuleDependency>) = add(externalModule)
-
-
-/**
- * Add a dependency.
- *
- * @param externalModule external module to add as a dependency
- * @param configuration an action to configure the dependency
- * @since 7.6
- */
-fun ConfigurationDependencyHandler.invoke(externalModule: Provider<out MinimalExternalModuleDependency>, configuration: Action<in ExternalModuleDependency>) = add(externalModule, configuration)
-
-
-/**
- * Add a dependency.
- *
- * @param externalModule external module to add as a dependency
- * @since 7.6
- */
-fun ConfigurationDependencyHandler.invoke(externalModule: ProviderConvertible<out MinimalExternalModuleDependency>) = add(externalModule)
+operator fun ConfigurationDependencyHandler.invoke(externalModule: Provider<out MinimalExternalModuleDependency>) = add(externalModule)
 
 
 /**
@@ -148,7 +129,26 @@ fun ConfigurationDependencyHandler.invoke(externalModule: ProviderConvertible<ou
  * @param configuration an action to configure the dependency
  * @since 7.6
  */
-fun ConfigurationDependencyHandler.invoke(externalModule: ProviderConvertible<out MinimalExternalModuleDependency>, configuration: Action<in ExternalModuleDependency>) = add(externalModule, configuration)
+operator fun ConfigurationDependencyHandler.invoke(externalModule: Provider<out MinimalExternalModuleDependency>, configuration: Action<in ExternalModuleDependency>) = add(externalModule, configuration)
+
+
+/**
+ * Add a dependency.
+ *
+ * @param externalModule external module to add as a dependency
+ * @since 7.6
+ */
+operator fun ConfigurationDependencyHandler.invoke(externalModule: ProviderConvertible<out MinimalExternalModuleDependency>) = add(externalModule)
+
+
+/**
+ * Add a dependency.
+ *
+ * @param externalModule external module to add as a dependency
+ * @param configuration an action to configure the dependency
+ * @since 7.6
+ */
+operator fun ConfigurationDependencyHandler.invoke(externalModule: ProviderConvertible<out MinimalExternalModuleDependency>, configuration: Action<in ExternalModuleDependency>) = add(externalModule, configuration)
 
 
 /**
@@ -157,7 +157,7 @@ fun ConfigurationDependencyHandler.invoke(externalModule: ProviderConvertible<ou
  * @param dependency dependency to add
  * @since 7.6
  */
-fun ConfigurationDependencyHandler.invoke(dependency: Dependency) = add(dependency)
+operator fun ConfigurationDependencyHandler.invoke(dependency: Dependency) = add(dependency)
 
 
 /**
@@ -167,7 +167,7 @@ fun ConfigurationDependencyHandler.invoke(dependency: Dependency) = add(dependen
  * @param configuration an action to configure the dependency
  * @since 7.6
  */
-fun <D : Dependency> ConfigurationDependencyHandler.invoke(dependency: D, configuration: Action<in D>) = add(dependency, configuration)
+operator fun <D : Dependency> ConfigurationDependencyHandler.invoke(dependency: D, configuration: Action<in D>) = add(dependency, configuration)
 
 
 /**
@@ -176,7 +176,7 @@ fun <D : Dependency> ConfigurationDependencyHandler.invoke(dependency: D, config
  * @param dependency dependency to add
  * @since 7.6
  */
-fun ConfigurationDependencyHandler.invoke(dependency: DependencyProvider<*>) = add(dependency)
+operator fun ConfigurationDependencyHandler.invoke(dependency: DependencyProvider<*>) = add(dependency)
 
 
 /**
@@ -186,4 +186,4 @@ fun ConfigurationDependencyHandler.invoke(dependency: DependencyProvider<*>) = a
  * @param configuration an action to configure the dependency
  * @since 7.6
  */
-fun <D : Dependency> ConfigurationDependencyHandler.invoke(dependency: DependencyProvider<out D>, configuration: Action<in D>) = add(dependency, configuration)
+operator fun <D : Dependency> ConfigurationDependencyHandler.invoke(dependency: DependencyProvider<out D>, configuration: Action<in D>) = add(dependency, configuration)
