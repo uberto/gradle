@@ -84,12 +84,11 @@ public class ApplicationClassesInSystemClassLoaderWorkerImplementationFactory {
     /**
      * Configures the Java command that will be used to launch the child process.
      */
-    public void prepareJavaCommand(long workerId, String displayName, WorkerProcessBuilder processBuilder, List<URL> implementationClassPath, List<URL> implementationModulePath, Address serverAddress, JavaExecHandleBuilder execSpec, boolean publishProcessInfo, boolean useOptionsFile) {
+    public void prepareJavaCommand(long workerId, String displayName, WorkerProcessBuilder processBuilder, List<URL> implementationClassPath, List<URL> implementationModulePath, Address serverAddress, JavaExecHandleBuilder execSpec, boolean publishProcessInfo) {
         Collection<File> applicationClasspath = processBuilder.getApplicationClasspath();
         Set<File> applicationModulePath = processBuilder.getApplicationModulePath();
         LogLevel logLevel = processBuilder.getLogLevel();
         Set<String> sharedPackages = processBuilder.getSharedPackages();
-        Object requestedSecurityManager = execSpec.getSystemProperties().get("java.security.manager");
         List<File> workerMainClassPath = classPathRegistry.getClassPath("WORKER_MAIN").getAsFiles();
 
         boolean runAsModule = !applicationModulePath.isEmpty() && execSpec.getModularity().getInferModulePath().get();
@@ -98,31 +97,26 @@ public class ApplicationClassesInSystemClassLoaderWorkerImplementationFactory {
             execSpec.getMainModule().set("gradle.worker");
         }
         execSpec.getMainClass().set("worker." + GradleWorkerMain.class.getName());
-        if (useOptionsFile) {
-            // Use an options file to pass across application classpath
-            File optionsFile = temporaryFileProvider.createTemporaryFile("gradle-worker-classpath", "txt");
-            List<String> jvmArgs = writeOptionsFile(runAsModule, workerMainClassPath, implementationModulePath, applicationClasspath, applicationModulePath, optionsFile);
-            execSpec.jvmArgs(jvmArgs);
-        } else {
-            // Use a dummy security manager, which hacks the application classpath into the system ClassLoader
-            execSpec.classpath(workerMainClassPath);
-            execSpec.systemProperty("java.security.manager", "worker." + BootstrapSecurityManager.class.getName());
-        }
+
+        // Use an options file to pass across application classpath
+        File optionsFile = temporaryFileProvider.createTemporaryFile("gradle-worker-classpath", "txt");
+        List<String> jvmArgs = writeOptionsFile(runAsModule, workerMainClassPath, implementationModulePath, applicationClasspath, applicationModulePath, optionsFile);
+        execSpec.jvmArgs(jvmArgs);
 
         // Serialize configuration for the worker process to it stdin
 
         StreamByteBuffer buffer = new StreamByteBuffer();
         try {
             DataOutputStream outstr = new DataOutputStream(new EncodedStream.EncodedOutput(buffer.getOutputStream()));
-            if (!useOptionsFile) {
-                // Serialize the application classpath, this is consumed by BootstrapSecurityManager
-                outstr.writeInt(applicationClasspath.size());
-                for (File file : applicationClasspath) {
-                    outstr.writeUTF(file.getAbsolutePath());
-                }
-                // Serialize the actual security manager type, this is consumed by BootstrapSecurityManager
-                outstr.writeUTF(requestedSecurityManager == null ? "" : requestedSecurityManager.toString());
-            }
+//            if (!useOptionsFile) {
+//                // Serialize the application classpath, this is consumed by BootstrapSecurityManager
+//                outstr.writeInt(applicationClasspath.size());
+//                for (File file : applicationClasspath) {
+//                    outstr.writeUTF(file.getAbsolutePath());
+//                }
+//                // Serialize the actual security manager type, this is consumed by BootstrapSecurityManager
+//                outstr.writeUTF(requestedSecurityManager == null ? "" : requestedSecurityManager.toString());
+//            }
 
             // Serialize the shared packages, this is consumed by GradleWorkerMain
             outstr.writeInt(sharedPackages.size());

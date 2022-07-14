@@ -244,7 +244,7 @@ public class DefaultWorkerProcessBuilder implements WorkerProcessBuilder {
             javaCommand.jvmArgs(JpmsConfiguration.GRADLE_WORKER_JPMS_ARGS);
         }
 
-        workerImplementationFactory.prepareJavaCommand(id, displayName, this, implementationClassPath, implementationModulePath, localAddress, javaCommand, shouldPublishJvmMemoryInfo, java9Compatible);
+        workerImplementationFactory.prepareJavaCommand(id, displayName, this, implementationClassPath, implementationModulePath, localAddress, javaCommand, shouldPublishJvmMemoryInfo);
 
         javaCommand.args("'" + displayName + "'");
         if (javaCommand.getMaxHeapSize() == null) {
