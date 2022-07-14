@@ -21,6 +21,7 @@ import org.gradle.api.InvalidUserDataException;
 import org.gradle.api.Project;
 import org.gradle.api.Transformer;
 import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.artifacts.ConfigurationContainer;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.MinimalExternalModuleDependency;
 import org.gradle.api.artifacts.ModuleDependency;
@@ -38,6 +39,8 @@ import org.gradle.api.provider.ValueSource;
 import org.gradle.internal.Cast;
 import org.gradle.internal.component.external.model.ImmutableCapability;
 import org.gradle.internal.component.external.model.ProjectTestFixtures;
+import org.gradle.internal.metaobject.MethodAccess;
+import org.gradle.internal.metaobject.MethodMixIn;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -46,11 +49,12 @@ import java.util.stream.Collectors;
 
 import static org.gradle.internal.component.external.model.TestFixturesSupport.TEST_FIXTURES_CAPABILITY_APPENDIX;
 
-public class DefaultJvmComponentDependencies implements JvmComponentDependencies {
+public abstract class DefaultJvmComponentDependencies implements JvmComponentDependencies, UnsupportedDependencyHandler, MethodMixIn {
     private final Configuration implementation;
     private final Configuration compileOnly;
     private final Configuration runtimeOnly;
     private final Configuration annotationProcessor;
+    private final DisallowedDependencyMethods dynamicMethods;
 
     @Inject
     public DefaultJvmComponentDependencies(Configuration implementation, Configuration compileOnly, Configuration runtimeOnly, Configuration annotationProcessor) {
@@ -58,17 +62,17 @@ public class DefaultJvmComponentDependencies implements JvmComponentDependencies
         this.compileOnly = compileOnly;
         this.runtimeOnly = runtimeOnly;
         this.annotationProcessor = annotationProcessor;
+        this.dynamicMethods = new DisallowedDependencyMethods(getConfigurationContainer());
     }
 
     @Inject
-    protected DependencyHandler getDependencyHandler() {
-        throw new UnsupportedOperationException();
-    }
+    protected abstract DependencyHandler getDependencyHandler();
 
     @Inject
-    protected ObjectFactory getObjectFactory() {
-        throw new UnsupportedOperationException();
-    }
+    protected abstract ConfigurationContainer getConfigurationContainer();
+
+    @Inject
+    protected abstract ObjectFactory getObjectFactory();
 
     @Override
     public void implementation(Object dependency) {
@@ -196,5 +200,10 @@ public class DefaultJvmComponentDependencies implements JvmComponentDependencies
             configuration.execute(created);
         }
         return created;
+    }
+
+    @Override
+    public MethodAccess getAdditionalMethods() {
+        return dynamicMethods;
     }
 }
