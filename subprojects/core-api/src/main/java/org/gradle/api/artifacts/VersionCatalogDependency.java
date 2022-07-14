@@ -14,23 +14,10 @@
  * limitations under the License.
  */
 
-package org.gradle.api.artifacts.dsl;
-
-import org.gradle.api.Incubating;
-import org.gradle.api.artifacts.Dependency;
-import org.gradle.api.provider.Provider;
+package org.gradle.api.artifacts;
 
 /**
- * Interface for taking a {@code Provider<? extends Dependency>} without conflicting with another
- * {@code Provider}-taking method because of erasure.
- *
- * <p>
- * <b>Note:</b> This interface is not intended for implementation by build script or plugin authors.
- * </p>
- *
- * @param <D> the dependency type
- * @since 7.6
+ * Specialized {@link ExternalModuleDependency} and {@link MinimalExternalModuleDependency} for version catalog.
  */
-@Incubating
-public interface DependencyProvider<D extends Dependency> extends Provider<D> {
+public interface VersionCatalogDependency extends ExternalModuleDependency, MinimalExternalModuleDependency {
 }

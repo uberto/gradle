@@ -22,11 +22,9 @@ import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.ExternalModuleDependency;
 import org.gradle.api.artifacts.FileCollectionDependency;
-import org.gradle.api.artifacts.MinimalExternalModuleDependency;
 import org.gradle.api.artifacts.ProjectDependency;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.provider.Provider;
-import org.gradle.api.provider.ProviderConvertible;
 import org.gradle.internal.HasInternalProtocol;
 
 import java.util.Map;
@@ -62,37 +60,10 @@ public interface DependencyFactory {
      * @param dependencyNotation the dependency notation
      * @return a provider for the new dependency
      */
-    default DependencyProvider<ExternalModuleDependency> createFromCharSequence(Provider<? extends CharSequence> dependencyNotation) {
-        return createFromProvider(dependencyNotation.map(this::createFromCharSequence));
+    default Provider<ExternalModuleDependency> createFromCharSequence(Provider<? extends CharSequence> dependencyNotation) {
+        return dependencyNotation.map(this::createFromCharSequence);
     }
 
-    /**
-     * Create an {@link ExternalModuleDependency} from a {@link MinimalExternalModuleDependency}.
-     *
-     * @param externalModule the dependency information
-     * @return the new dependency
-     */
-    ExternalModuleDependency createFromExternalModule(MinimalExternalModuleDependency externalModule);
-
-    /**
-     * Lazily create an {@link ExternalModuleDependency}, using the same notation as {@link #createFromExternalModule(MinimalExternalModuleDependency)}.
-     *
-     * @param externalModule the dependency information
-     * @return a provider for the new dependency
-     */
-    default DependencyProvider<ExternalModuleDependency> createFromExternalModule(Provider<? extends MinimalExternalModuleDependency> externalModule) {
-        return createFromProvider(externalModule.map(this::createFromExternalModule));
-    }
-
-    /**
-     * Lazily create an {@link ExternalModuleDependency}, using the same notation as {@link #createFromExternalModule(MinimalExternalModuleDependency)}.
-     *
-     * @param externalModule the dependency information
-     * @return a provider for the new dependency
-     */
-    default DependencyProvider<ExternalModuleDependency> createFromExternalModule(ProviderConvertible<? extends MinimalExternalModuleDependency> externalModule) {
-        return createFromExternalModule(externalModule.asProvider());
-    }
 
     /**
      * Create an {@link ExternalModuleDependency} from a {@link Map}. The map may contain the following keys:
@@ -115,8 +86,8 @@ public interface DependencyFactory {
      * @param map the dependency map
      * @return a provider for the new dependency
      */
-    default DependencyProvider<ExternalModuleDependency> createFromMap(Provider<? extends Map<String, ?>> map) {
-        return createFromProvider(map.map(this::createFromMap));
+    default Provider<ExternalModuleDependency> createFromMap(Provider<? extends Map<String, ?>> map) {
+        return map.map(this::createFromMap);
     }
 
     /**
@@ -140,21 +111,7 @@ public interface DependencyFactory {
      *
      * @param project the project
      */
-    default DependencyProvider<ProjectDependency> createFromProject(Provider<? extends Project> project) {
-        return createFromProvider(project.map(this::createFromProject));
+    default Provider<ProjectDependency> createFromProject(Provider<? extends Project> project) {
+        return project.map(this::createFromProject);
     }
-
-    /**
-     * Convert a {@link Provider} for a {@link Dependency} to a {@link DependencyProvider}. This assists with using a generic provider
-     * without erasure being an issue.
-     *
-     * <p>
-     * The provider's value will be cached on first access, so that there's only one instance of the dependency created.
-     * </p>
-     *
-     * @param dependencyProvider the dependency provider
-     * @return a more strongly-typed and cached dependency provider
-     * @param <D> the dependency type
-     */
-    <D extends Dependency> DependencyProvider<D> createFromProvider(Provider<D> dependencyProvider);
 }

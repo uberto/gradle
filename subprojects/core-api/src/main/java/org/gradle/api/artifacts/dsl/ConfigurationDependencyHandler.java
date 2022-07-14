@@ -107,21 +107,6 @@ public interface ConfigurationDependencyHandler {
      * Add a dependency.
      *
      * @param externalModule external module to add as a dependency
-     */
-    void add(Provider<? extends MinimalExternalModuleDependency> externalModule);
-
-    /**
-     * Add a dependency.
-     *
-     * @param externalModule external module to add as a dependency
-     * @param configuration an action to configure the dependency
-     */
-    void add(Provider<? extends MinimalExternalModuleDependency> externalModule, Action<? super ExternalModuleDependency> configuration);
-
-    /**
-     * Add a dependency.
-     *
-     * @param externalModule external module to add as a dependency
      *
      */
     void add(ProviderConvertible<? extends MinimalExternalModuleDependency> externalModule);
@@ -154,7 +139,7 @@ public interface ConfigurationDependencyHandler {
      *
      * @param dependency dependency to add
      */
-    void add(DependencyProvider<?> dependency);
+    void add(Provider<? extends Dependency> dependency);
 
     /**
      * Add a dependency.
@@ -162,5 +147,5 @@ public interface ConfigurationDependencyHandler {
      * @param dependency dependency to add
      * @param configuration an action to configure the dependency
      */
-    <D extends Dependency> void add(DependencyProvider<? extends D> dependency, Action<? super D> configuration);
+    <D extends Dependency> void add(Provider<? extends D> dependency, Action<? super D> configuration);
 }

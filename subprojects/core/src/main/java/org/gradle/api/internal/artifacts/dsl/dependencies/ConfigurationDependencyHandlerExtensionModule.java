@@ -25,7 +25,6 @@ import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.MinimalExternalModuleDependency;
 import org.gradle.api.artifacts.dsl.ConfigurationDependencyHandler;
 import org.gradle.api.artifacts.dsl.DependencyFactory;
-import org.gradle.api.artifacts.dsl.DependencyProvider;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.provider.ProviderConvertible;
@@ -119,26 +118,6 @@ public class ConfigurationDependencyHandlerExtensionModule {
      *
      * @param externalModule external module to add as a dependency
      */
-    public static void call(ConfigurationDependencyHandler self, Provider<? extends MinimalExternalModuleDependency> externalModule) {
-        self.add(externalModule);
-    }
-
-    /**
-     * Add a dependency.
-     *
-     * @param externalModule external module to add as a dependency
-     * @param configuration an action to configure the dependency
-     */
-    public static void call(ConfigurationDependencyHandler self, Provider<? extends MinimalExternalModuleDependency> externalModule, @ClosureParams(value = SimpleType.class, options = "org.gradle.api.artifacts.ExternalModuleDependency") Closure<?> configuration) {
-        self.add(externalModule, ConfigureUtil.configureUsing(configuration));
-    }
-
-
-    /**
-     * Add a dependency.
-     *
-     * @param externalModule external module to add as a dependency
-     */
     public static void call(ConfigurationDependencyHandler self, ProviderConvertible<? extends MinimalExternalModuleDependency> externalModule) {
         self.add(externalModule);
     }
@@ -178,7 +157,7 @@ public class ConfigurationDependencyHandlerExtensionModule {
      *
      * @param dependency dependency to add
      */
-    public static void call(ConfigurationDependencyHandler self, DependencyProvider<?> dependency) {
+    public static void call(ConfigurationDependencyHandler self, Provider<? extends Dependency> dependency) {
         self.add(dependency);
     }
 
@@ -188,7 +167,7 @@ public class ConfigurationDependencyHandlerExtensionModule {
      * @param dependency dependency to add
      * @param configuration an action to configure the dependency
      */
-    public static <D extends Dependency> void call(ConfigurationDependencyHandler self, DependencyProvider<? extends D> dependency, @ClosureParams(SecondParam.FirstGenericType.class) Closure<?> configuration) {
+    public static <D extends Dependency> void call(ConfigurationDependencyHandler self, Provider<? extends D> dependency, @ClosureParams(SecondParam.FirstGenericType.class) Closure<?> configuration) {
         self.add(dependency, ConfigureUtil.configureUsing(configuration));
     }
 }

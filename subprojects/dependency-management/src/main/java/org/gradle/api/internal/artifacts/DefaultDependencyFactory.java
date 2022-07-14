@@ -23,9 +23,7 @@ import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.DependencyConstraint;
 import org.gradle.api.artifacts.ExternalModuleDependency;
 import org.gradle.api.artifacts.FileCollectionDependency;
-import org.gradle.api.artifacts.MinimalExternalModuleDependency;
 import org.gradle.api.artifacts.ProjectDependency;
-import org.gradle.api.artifacts.dsl.DependencyProvider;
 import org.gradle.api.capabilities.Capability;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.artifacts.dependencies.AbstractModuleDependency;
@@ -36,8 +34,6 @@ import org.gradle.api.internal.artifacts.dsl.dependencies.ProjectFinder;
 import org.gradle.api.internal.attributes.ImmutableAttributesFactory;
 import org.gradle.api.internal.notations.DependencyNotationParser;
 import org.gradle.api.internal.notations.ProjectDependencyFactory;
-import org.gradle.api.internal.provider.ProviderInternal;
-import org.gradle.api.provider.Provider;
 import org.gradle.internal.typeconversion.NotationParser;
 
 import java.util.Map;
@@ -125,11 +121,6 @@ public class DefaultDependencyFactory implements DependencyFactoryInternal {
     }
 
     @Override
-    public ExternalModuleDependency createFromExternalModule(MinimalExternalModuleDependency externalModule) {
-        return dependencyNotationParser.getMinimalExternalModuleDependencyNotationParser().parseNotation(externalModule);
-    }
-
-    @Override
     public ExternalModuleDependency createFromMap(Map<String, ?> map) {
         return dependencyNotationParser.getMapNotationParser().parseNotation(map);
     }
@@ -142,11 +133,6 @@ public class DefaultDependencyFactory implements DependencyFactoryInternal {
     @Override
     public ProjectDependency createFromProject(Project project) {
         return dependencyNotationParser.getProjectNotationParser().parseNotation(project);
-    }
-
-    @Override
-    public <D extends Dependency> DependencyProvider<D> createFromProvider(Provider<D> dependencyProvider) {
-        return new DefaultDependencyProvider<>((ProviderInternal<D>) dependencyProvider);
     }
 
     // endregion

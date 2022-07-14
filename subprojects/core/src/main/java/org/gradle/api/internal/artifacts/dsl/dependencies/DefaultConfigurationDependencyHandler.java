@@ -26,7 +26,6 @@ import org.gradle.api.artifacts.MinimalExternalModuleDependency;
 import org.gradle.api.artifacts.ProjectDependency;
 import org.gradle.api.artifacts.dsl.ConfigurationDependencyHandler;
 import org.gradle.api.artifacts.dsl.DependencyFactory;
-import org.gradle.api.artifacts.dsl.DependencyProvider;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.provider.ProviderConvertible;
@@ -52,7 +51,7 @@ public class DefaultConfigurationDependencyHandler implements ConfigurationDepen
         configuration.getDependencies().add(dependency);
     }
 
-    private <D extends Dependency> void doAddLazy(DependencyProvider<D> dependency, @Nullable Action<? super D> config) {
+    private <D extends Dependency> void doAddLazy(Provider<D> dependency, @Nullable Action<? super D> config) {
         Provider<D> provider = dependency;
         if (config != null) {
             provider = provider.map(d -> {
@@ -104,23 +103,13 @@ public class DefaultConfigurationDependencyHandler implements ConfigurationDepen
     }
 
     @Override
-    public void add(Provider<? extends MinimalExternalModuleDependency> externalModule) {
-        doAddLazy(dependencyFactory.createFromExternalModule(externalModule), null);
-    }
-
-    @Override
-    public void add(Provider<? extends MinimalExternalModuleDependency> externalModule, Action<? super ExternalModuleDependency> configuration) {
-        doAddLazy(dependencyFactory.createFromExternalModule(externalModule), configuration);
-    }
-
-    @Override
     public void add(ProviderConvertible<? extends MinimalExternalModuleDependency> externalModule) {
-        doAddLazy(dependencyFactory.createFromExternalModule(externalModule), null);
+        doAddLazy(externalModule.asProvider(), null);
     }
 
     @Override
     public void add(ProviderConvertible<? extends MinimalExternalModuleDependency> externalModule, Action<? super ExternalModuleDependency> configuration) {
-        doAddLazy(dependencyFactory.createFromExternalModule(externalModule), configuration);
+        doAddLazy(externalModule.asProvider(), configuration);
     }
 
     @Override
@@ -134,12 +123,12 @@ public class DefaultConfigurationDependencyHandler implements ConfigurationDepen
     }
 
     @Override
-    public void add(DependencyProvider<?> dependency) {
+    public void add(Provider<? extends Dependency> dependency) {
         doAddLazy(dependency, null);
     }
 
     @Override
-    public <D extends Dependency> void add(DependencyProvider<? extends D> dependency, Action<? super D> configuration) {
+    public <D extends Dependency> void add(Provider<? extends D> dependency, Action<? super D> configuration) {
         doAddLazy(dependency, configuration);
     }
 

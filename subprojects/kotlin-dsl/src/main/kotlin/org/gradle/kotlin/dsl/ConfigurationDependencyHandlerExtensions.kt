@@ -15,6 +15,7 @@
  */
 
 @file:Incubating
+
 package org.gradle.kotlin.dsl
 
 import org.gradle.api.Action
@@ -27,7 +28,6 @@ import org.gradle.api.artifacts.MinimalExternalModuleDependency
 import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.artifacts.dsl.ConfigurationDependencyHandler
 import org.gradle.api.artifacts.dsl.DependencyFactory
-import org.gradle.api.artifacts.dsl.DependencyProvider
 import org.gradle.api.file.FileCollection
 import org.gradle.api.provider.Provider
 import org.gradle.api.provider.ProviderConvertible
@@ -119,25 +119,6 @@ operator fun ConfigurationDependencyHandler.invoke(files: FileCollection, config
  * @param externalModule external module to add as a dependency
  * @since 7.6
  */
-operator fun ConfigurationDependencyHandler.invoke(externalModule: Provider<out MinimalExternalModuleDependency>) = add(externalModule)
-
-
-/**
- * Add a dependency.
- *
- * @param externalModule external module to add as a dependency
- * @param configuration an action to configure the dependency
- * @since 7.6
- */
-operator fun ConfigurationDependencyHandler.invoke(externalModule: Provider<out MinimalExternalModuleDependency>, configuration: Action<in ExternalModuleDependency>) = add(externalModule, configuration)
-
-
-/**
- * Add a dependency.
- *
- * @param externalModule external module to add as a dependency
- * @since 7.6
- */
 operator fun ConfigurationDependencyHandler.invoke(externalModule: ProviderConvertible<out MinimalExternalModuleDependency>) = add(externalModule)
 
 
@@ -176,7 +157,7 @@ operator fun <D : Dependency> ConfigurationDependencyHandler.invoke(dependency: 
  * @param dependency dependency to add
  * @since 7.6
  */
-operator fun ConfigurationDependencyHandler.invoke(dependency: DependencyProvider<*>) = add(dependency)
+operator fun ConfigurationDependencyHandler.invoke(dependency: Provider<out Dependency>) = add(dependency)
 
 
 /**
@@ -186,4 +167,4 @@ operator fun ConfigurationDependencyHandler.invoke(dependency: DependencyProvide
  * @param configuration an action to configure the dependency
  * @since 7.6
  */
-operator fun <D : Dependency> ConfigurationDependencyHandler.invoke(dependency: DependencyProvider<out D>, configuration: Action<in D>) = add(dependency, configuration)
+operator fun <D : Dependency> ConfigurationDependencyHandler.invoke(dependency: Provider<out D>, configuration: Action<in D>) = add(dependency, configuration)

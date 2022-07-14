@@ -25,7 +25,7 @@ import org.gradle.internal.Actions;
 
 import javax.annotation.Nullable;
 
-public class DefaultMinimalDependencyVariant implements MinimalExternalModuleDependency, DependencyVariant {
+public class DefaultMinimalDependencyVariant extends DefaultExternalModuleDependency implements MinimalExternalModuleDependency, DependencyVariant {
     private final MinimalExternalModuleDependency delegate;
     private final Action<? super AttributeContainer> attributesMutator;
     private final Action<? super ModuleDependencyCapabilitiesHandler> capabilitiesMutator;
@@ -37,6 +37,7 @@ public class DefaultMinimalDependencyVariant implements MinimalExternalModuleDep
                                            @Nullable Action<? super ModuleDependencyCapabilitiesHandler> capabilitiesMutator,
                                            @Nullable String classifier,
                                            @Nullable String artifactType) {
+        super(delegate.getModule(), new DefaultMutableVersionConstraint(delegate.getVersionConstraint()));
         this.delegate = delegate;
         boolean delegateIsVariant = delegate instanceof DefaultMinimalDependencyVariant;
         this.attributesMutator = delegateIsVariant ? Actions.composite(((DefaultMinimalDependencyVariant) delegate).attributesMutator, attributesMutator == null ? Actions.doNothing() : attributesMutator) : attributesMutator;
@@ -49,16 +50,6 @@ public class DefaultMinimalDependencyVariant implements MinimalExternalModuleDep
         }
         this.classifier = classifier;
         this.artifactType = artifactType;
-    }
-
-    @Override
-    public ModuleIdentifier getModule() {
-        return delegate.getModule();
-    }
-
-    @Override
-    public VersionConstraint getVersionConstraint() {
-        return delegate.getVersionConstraint();
     }
 
     @Override
