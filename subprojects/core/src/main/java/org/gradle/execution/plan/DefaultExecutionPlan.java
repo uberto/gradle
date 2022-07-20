@@ -97,6 +97,16 @@ public class DefaultExecutionPlan implements ExecutionPlan, WorkSource<Node> {
 
     private boolean buildCancelled;
 
+    private int totalNodes;
+    private long totalHardSuccessors;
+    private int maxHardSuccessors;
+    private long totalSelects;
+    private long totalSelectsWithNothingReady;
+    private long totalQueueLength;
+    private long maxQueueLength;
+    private long totalNodesChecked;
+
+
     public DefaultExecutionPlan(
         String displayName,
         TaskNodeFactory taskNodeFactory,
@@ -241,6 +251,13 @@ public class DefaultExecutionPlan implements ExecutionPlan, WorkSource<Node> {
             Node node = executionQueue.next();
             node.updateAllDependenciesComplete();
             maybeNodeReady(node);
+
+            totalNodes++;
+            int hardSuccessors = ImmutableList.copyOf(node.getHardSuccessors()).size();
+            totalHardSuccessors += hardSuccessors;
+            if (hardSuccessors > maxHardSuccessors) {
+                maxHardSuccessors = hardSuccessors;
+            }
         }
         lockCoordinator.addLockReleaseListener(resourceUnlockListener);
     }
@@ -271,6 +288,20 @@ public class DefaultExecutionPlan implements ExecutionPlan, WorkSource<Node> {
         reachableCache.clear();
         finalizers.clear();
         preExecutionNodesVisited.clear();
+
+        System.out.println("EXECUTION PLAN STATS");
+        System.out.println("total nodes: " + totalNodes);
+        if (totalNodes > 0) {
+            System.out.println("average hard successors: " + (totalHardSuccessors / totalNodes));
+            System.out.println("max hard successors: " + maxHardSuccessors);
+        }
+        System.out.println("total selects: " + totalSelects);
+        if (totalSelects > 0) {
+            System.out.println("total selects with nothing ready: " + totalSelectsWithNothingReady);
+            System.out.println("average queue length: " + (totalQueueLength / totalSelects));
+            System.out.println("max queue length: " + maxQueueLength);
+            System.out.println("average nodes checked per select: " + (totalNodesChecked / totalSelects));
+        }
     }
 
     private void resourceUnlocked(ResourceLock resourceLock) {
@@ -390,6 +421,13 @@ public class DefaultExecutionPlan implements ExecutionPlan, WorkSource<Node> {
 
     @Override
     public Selection<Node> selectNext() {
+        totalSelects++;
+        int queueLength = executionQueue.size();
+        totalQueueLength += queueLength;
+        if (queueLength > maxQueueLength) {
+            maxQueueLength = queueLength;
+        }
+
         lockCoordinator.assertHasStateLock();
         if (executionQueue.isEmpty()) {
             return Selection.noMoreWorkToStart();
@@ -403,6 +441,7 @@ public class DefaultExecutionPlan implements ExecutionPlan, WorkSource<Node> {
         executionQueue.restart();
         while (executionQueue.hasNext()) {
             Node node = executionQueue.next();
+            totalNodesChecked++;
             if (node.allDependenciesComplete()) {
                 if (!node.allDependenciesSuccessful()) {
                     // Cannot execute this node due to failed dependencies - skip it
@@ -457,6 +496,7 @@ public class DefaultExecutionPlan implements ExecutionPlan, WorkSource<Node> {
         if (executionQueue.isEmpty()) {
             return Selection.noMoreWorkToStart();
         } else {
+            totalSelectsWithNothingReady++;
             // No nodes are able to start
             // - they are ready to execute but cannot acquire the resources they need to start
             // - they are waiting for their dependencies to complete

@@ -29,9 +29,6 @@ import org.gradle.internal.concurrent.ManagedExecutor;
 import org.gradle.internal.concurrent.Stoppable;
 import org.gradle.internal.logging.text.TreeFormatter;
 import org.gradle.internal.resources.ResourceLockCoordinationService;
-import org.gradle.internal.time.Time;
-import org.gradle.internal.time.TimeFormatting;
-import org.gradle.internal.time.Timer;
 import org.gradle.internal.work.WorkerLeaseRegistry.WorkerLease;
 import org.gradle.internal.work.WorkerLeaseService;
 import org.slf4j.Logger;
@@ -40,14 +37,19 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nullable;
 import java.io.Closeable;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
+import java.util.function.ToLongFunction;
 
 import static org.gradle.internal.resources.ResourceLockState.Disposition.FINISHED;
 import static org.gradle.internal.resources.ResourceLockState.Disposition.RETRY;
@@ -62,6 +64,7 @@ public class DefaultPlanExecutor implements PlanExecutor, Stoppable {
     private final ManagedExecutor executor;
     private final MergedQueues queue;
     private final AtomicBoolean workersStarted = new AtomicBoolean();
+    private final List<Stats> workerStats = new CopyOnWriteArrayList<>();
 
     public DefaultPlanExecutor(ParallelismConfiguration parallelismConfiguration, ExecutorFactory executorFactory, WorkerLeaseService workerLeaseService, BuildCancellationToken cancellationToken, ResourceLockCoordinationService coordinationService) {
         this.cancellationToken = cancellationToken;
@@ -80,6 +83,19 @@ public class DefaultPlanExecutor implements PlanExecutor, Stoppable {
     @Override
     public void stop() {
         CompositeStoppable.stoppable(queue, executor).stop();
+        System.out.println("WORKER STATS");
+        int workerCount = workerStats.size();
+        System.out.println("worker count: " + workerCount);
+        if (workerCount > 0) {
+            System.out.println("average select time: " + format(workerCount, stats -> stats.totalSelectTime));
+            System.out.println("average execute time: " + format(workerCount, stats -> stats.totalExecuteTime));
+            System.out.println("average finish time: " + format(workerCount, stats -> stats.totalMarkFinishedTime));
+        }
+    }
+
+    private String format(int workerCount, ToLongFunction<Stats> statsToLongFunction) {
+        BigDecimal averageNanos = BigDecimal.valueOf(workerStats.stream().mapToLong(statsToLongFunction).sum() / workerCount);
+        return DecimalFormat.getNumberInstance().format(averageNanos.divide(BigDecimal.valueOf(1000000), RoundingMode.HALF_UP)) + "ms";
     }
 
     @Override
@@ -93,7 +109,7 @@ public class DefaultPlanExecutor implements PlanExecutor, Stoppable {
         WorkerLease currentWorkerLease = workerLeaseService.getCurrentWorkerLease();
         MergedQueues thisPlanOnly = new MergedQueues(coordinationService, true);
         thisPlanOnly.add(planDetails);
-        new ExecutorWorker(thisPlanOnly, currentWorkerLease, cancellationToken, coordinationService, workerLeaseService).run();
+        new ExecutorWorker(thisPlanOnly, currentWorkerLease, cancellationToken, coordinationService, workerLeaseService, workerStats::add).run();
 
         List<Throwable> failures = new ArrayList<>();
         awaitCompletion(workSource, currentWorkerLease, failures);
@@ -132,7 +148,7 @@ public class DefaultPlanExecutor implements PlanExecutor, Stoppable {
         if (workersStarted.compareAndSet(false, true)) {
             LOGGER.debug("Using {} parallel executor threads", executorCount);
             for (int i = 1; i < executorCount; i++) {
-                executor.execute(new ExecutorWorker(queue, null, cancellationToken, coordinationService, workerLeaseService));
+                executor.execute(new ExecutorWorker(queue, null, cancellationToken, coordinationService, workerLeaseService, workerStats::add));
             }
         }
     }
@@ -299,27 +315,28 @@ public class DefaultPlanExecutor implements PlanExecutor, Stoppable {
         private final BuildCancellationToken cancellationToken;
         private final ResourceLockCoordinationService coordinationService;
         private final WorkerLeaseService workerLeaseService;
+        private final Consumer<Stats> statsConsumer;
+        private final Stats stats = new Stats();
 
         private ExecutorWorker(
             MergedQueues queue,
             @Nullable WorkerLease workerLease,
             BuildCancellationToken cancellationToken,
             ResourceLockCoordinationService coordinationService,
-            WorkerLeaseService workerLeaseService
+            WorkerLeaseService workerLeaseService,
+            Consumer<Stats> statsConsumer
         ) {
             this.queue = queue;
             this.workerLease = workerLease;
             this.cancellationToken = cancellationToken;
             this.coordinationService = coordinationService;
             this.workerLeaseService = workerLeaseService;
+            this.statsConsumer = statsConsumer;
         }
 
         @Override
         public void run() {
-            final AtomicLong busy = new AtomicLong(0);
-            Timer totalTimer = Time.startTimer();
-            final Timer executionTimer = Time.startTimer();
-
+            stats.start();
             boolean releaseLeaseOnCompletion;
             if (workerLease == null) {
                 workerLease = workerLeaseService.newWorkerLease();
@@ -329,30 +346,23 @@ public class DefaultPlanExecutor implements PlanExecutor, Stoppable {
             }
 
             while (true) {
+                stats.startSelect();
                 WorkItem workItem = getNextItem(workerLease);
+                stats.finishSelect();
                 if (workItem == null) {
                     break;
                 }
                 Object selected = workItem.selection.getItem();
                 LOGGER.info("{} ({}) started.", selected, Thread.currentThread());
-                executionTimer.reset();
                 execute(selected, workItem.plan, workItem.executor);
-                long duration = executionTimer.getElapsedMillis();
-                busy.addAndGet(duration);
-                if (LOGGER.isInfoEnabled()) {
-                    LOGGER.info("{} ({}) completed. Took {}.", selected, Thread.currentThread(), TimeFormatting.formatDurationVerbose(duration));
-                }
             }
 
             if (releaseLeaseOnCompletion) {
                 coordinationService.withStateLock(() -> workerLease.unlock());
             }
 
-            long total = totalTimer.getElapsedMillis();
-
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Execution worker [{}] finished, busy: {}, idle: {}", Thread.currentThread(), TimeFormatting.formatDurationVerbose(busy.get()), TimeFormatting.formatDurationVerbose(total - busy.get()));
-            }
+            stats.finish();
+            statsConsumer.accept(stats);
         }
 
         /**
@@ -413,17 +423,20 @@ public class DefaultPlanExecutor implements PlanExecutor, Stoppable {
         private void execute(Object selected, WorkSource<Object> executionPlan, Action<Object> worker) {
             Throwable failure = null;
             try {
+                stats.startExecute();
                 try {
                     worker.execute(selected);
                 } catch (Throwable t) {
                     failure = t;
                 }
+                stats.finishExecute();
             } finally {
                 markFinished(selected, executionPlan, failure);
             }
         }
 
         private void markFinished(Object selected, WorkSource<Object> executionPlan, @Nullable Throwable failure) {
+            stats.startMarkFinished();
             coordinationService.withStateLock(() -> {
                 try {
                     executionPlan.finishedExecuting(selected, failure);
@@ -434,6 +447,57 @@ public class DefaultPlanExecutor implements PlanExecutor, Stoppable {
                 // or this might be the last item in the queue
                 coordinationService.notifyStateChange();
             });
+            stats.finishMarkFinished();
+        }
+    }
+
+    private static class Stats {
+        long startTime;
+        long finishTime;
+        long startCurrentOperation;
+        long totalSelectTime;
+        long totalExecuteTime;
+        long totalMarkFinishedTime;
+
+        public void start() {
+            startTime = System.nanoTime();
+        }
+
+        public void finish() {
+            finishTime = System.nanoTime();
+        }
+
+        public void startSelect() {
+            startCurrentOperation = System.nanoTime();
+        }
+
+        public void finishSelect() {
+            long duration = System.nanoTime() - startCurrentOperation;
+            if (duration > 0) {
+                totalSelectTime += duration;
+            }
+        }
+
+        public void startExecute() {
+            startCurrentOperation = System.nanoTime();
+        }
+
+        public void finishExecute() {
+            long duration = System.nanoTime() - startCurrentOperation;
+            if (duration > 0) {
+                totalExecuteTime += duration;
+            }
+        }
+
+        public void startMarkFinished() {
+            startCurrentOperation = System.nanoTime();
+        }
+
+        public void finishMarkFinished() {
+            long duration = System.nanoTime() - startCurrentOperation;
+            if (duration > 0) {
+                totalMarkFinishedTime += duration;
+            }
         }
     }
 }
