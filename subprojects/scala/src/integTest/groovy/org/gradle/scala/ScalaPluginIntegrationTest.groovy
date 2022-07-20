@@ -272,7 +272,7 @@ task someTask
             }
 
             tasks.withType(AbstractScalaCompile) {
-                scalaCompileOptions.keepAliveOption = 'SESSION'
+                scalaCompileOptions.keepAliveMode = KeepAliveMode.SESSION
             }
         """
         file('src/main/scala/Foo.scala') << '''
