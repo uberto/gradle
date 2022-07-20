@@ -65,7 +65,7 @@ public class BaseScalaCompileOptions extends AbstractOptions {
 
     private IncrementalCompileOptions incrementalOptions;
 
-    private final Property<String> keepAliveOption = getObjectFactory().property(String.class).convention(KeepAliveMode.SESSION.name());
+    private final Property<String> keepAliveOption = getObjectFactory().property(String.class);
 
     @Inject
     protected ObjectFactory getObjectFactory() {
