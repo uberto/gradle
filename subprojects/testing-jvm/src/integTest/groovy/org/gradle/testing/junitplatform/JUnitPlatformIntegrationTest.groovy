@@ -39,6 +39,30 @@ class JUnitPlatformIntegrationTest extends JUnitPlatformIntegrationSpec {
             '''
     }
 
+    void createDynamicJupiterTest() {
+        file('src/test/java/org/gradle/JUnitJupiterDynamicTest.java') << '''
+            package org.gradle;
+
+            import org.junit.jupiter.api.DynamicTest;
+            import org.junit.jupiter.api.TestFactory;
+
+            import java.util.stream.IntStream;
+            import java.util.stream.Stream;
+
+            import static org.junit.jupiter.api.Assertions.*;
+            import static org.junit.jupiter.api.DynamicTest.dynamicTest;
+
+            public class JUnitJupiterDynamicTest {
+
+                @TestFactory
+                Stream<DynamicTest> dynamicTestStream() {
+                    return IntStream.of(2, 4, 5)
+                        .mapToObj(v -> dynamicTest(v + " is even", () -> assertEquals(0, v % 2)));
+                }
+            }
+            '''
+    }
+
     def 'can work with junit-platform-runner'() {
         given:
         buildFile << """
@@ -50,6 +74,25 @@ class JUnitPlatformIntegrationTest extends JUnitPlatformIntegrationSpec {
 
         expect:
         succeeds('test')
+    }
+
+    def 'can handle dynamically created test'() {
+        given:
+        buildFile << """
+        dependencies {
+            testImplementation 'org.junit.platform:junit-platform-runner:1.0.3'
+        }
+        """
+        createDynamicJupiterTest()
+
+        when:
+        fails('test')
+
+        then:
+        new DefaultTestExecutionResult(testDirectory)
+            .assertTestClassesExecuted('org.gradle.JUnitJupiterDynamicTest')
+            .testClass('org.gradle.JUnitJupiterDynamicTest')
+            .assertTestCount(3, 1, 0)
     }
 
     def 'should prompt user to add dependencies when they are not in test runtime classpath'() {
