@@ -17,7 +17,9 @@
 package org.gradle.testing.junitplatform
 
 import org.gradle.api.internal.tasks.testing.junit.JUnitSupport
+import org.gradle.api.logging.configuration.ConsoleOutput
 import org.gradle.integtests.fixtures.DefaultTestExecutionResult
+import org.gradle.integtests.fixtures.executer.LogContent
 import spock.lang.Issue
 import spock.lang.Timeout
 
@@ -86,13 +88,27 @@ class JUnitPlatformIntegrationTest extends JUnitPlatformIntegrationSpec {
         createDynamicJupiterTest()
 
         when:
-        fails('test')
+           def build = executer
+                .withTasks('test')
+                .withTestConsoleAttached()
+                .withConsole(console)
+                .start()
+
+        build.waitForFailure()
+        def output = LogContent.of(build.standardOutput).ansiCharsToColorText().withNormalizedEol()
+
+        println "!!!!!>>" + output+ "<<<<"
+//JUnitJupiterDynamicTest > dynamicTestStream() > org.gradle.JUnitJupiterDynamicTest.dynamicTestStream()[3] FAILED
 
         then:
+
         new DefaultTestExecutionResult(testDirectory)
             .assertTestClassesExecuted('org.gradle.JUnitJupiterDynamicTest')
             .testClass('org.gradle.JUnitJupiterDynamicTest')
             .assertTestCount(3, 1, 0)
+
+        where:
+        console << [ConsoleOutput.Plain] //, ConsoleOutput.Rich, ConsoleOutput.Verbose
     }
 
     def 'should prompt user to add dependencies when they are not in test runtime classpath'() {
