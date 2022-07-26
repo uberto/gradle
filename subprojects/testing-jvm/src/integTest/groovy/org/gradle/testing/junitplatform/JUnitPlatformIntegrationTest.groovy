@@ -97,8 +97,11 @@ class JUnitPlatformIntegrationTest extends JUnitPlatformIntegrationSpec {
         build.waitForFailure()
         def output = LogContent.of(build.standardOutput).ansiCharsToColorText().withNormalizedEol()
 
-        println "!!!!!>>" + output+ "<<<<"
-//JUnitJupiterDynamicTest > dynamicTestStream() > org.gradle.JUnitJupiterDynamicTest.dynamicTestStream()[3] FAILED
+        if (output.contains("dynamicTestStream()[3]"))
+            throw new AssertionError("expected displayName for dynamic test but found array method instead");
+
+        if (!output.contains("is even"))
+            throw new AssertionError("expected displayName for dynamic test but not present");
 
         then:
 
@@ -110,6 +113,46 @@ class JUnitPlatformIntegrationTest extends JUnitPlatformIntegrationSpec {
         where:
         console << [ConsoleOutput.Plain] //, ConsoleOutput.Rich, ConsoleOutput.Verbose
     }
+
+    def 'can handle dynamically created test on log info'() {
+        given:
+        buildFile << """
+        dependencies {
+            testImplementation 'org.junit.platform:junit-platform-runner:1.0.3'
+        }
+        """
+        createDynamicJupiterTest()
+
+        when:
+        def build = executer
+            .withTasks('test')
+        .withArgument('--info')
+            .withTestConsoleAttached()
+            .withConsole(console)
+            .start()
+
+        build.waitForFailure()
+        def output = LogContent.of(build.standardOutput).ansiCharsToColorText().withNormalizedEol()
+
+        if (output.contains("dynamicTestStream()[3]"))
+            throw new AssertionError("expected displayName for dynamic test but found array method instead");
+
+        if (!output.contains("is even"))
+            throw new AssertionError("expected displayName for dynamic test but not present");
+
+        then:
+
+        new DefaultTestExecutionResult(testDirectory)
+            .assertTestClassesExecuted('org.gradle.JUnitJupiterDynamicTest')
+            .testClass('org.gradle.JUnitJupiterDynamicTest')
+            .assertTestCount(3, 1, 0)
+
+        where:
+        console << [ConsoleOutput.Plain] //, ConsoleOutput.Rich, ConsoleOutput.Verbose
+    }
+
+
+
 
     def 'should prompt user to add dependencies when they are not in test runtime classpath'() {
         given:
