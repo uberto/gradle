@@ -97,11 +97,12 @@ class JUnitPlatformIntegrationTest extends JUnitPlatformIntegrationSpec {
         build.waitForFailure()
         def output = LogContent.of(build.standardOutput).ansiCharsToColorText().withNormalizedEol()
 
-        if (output.contains("dynamicTestStream()[3]"))
+        if (output.contains("dynamicTestStream()[3]")) {
             throw new AssertionError("expected displayName for dynamic test but found array method instead");
-
-        if (!output.contains("is even"))
+        }
+        if (!output.contains("is even")) {
             throw new AssertionError("expected displayName for dynamic test but not present");
+        }
 
         then:
 
@@ -134,11 +135,12 @@ class JUnitPlatformIntegrationTest extends JUnitPlatformIntegrationSpec {
         build.waitForFailure()
         def output = LogContent.of(build.standardOutput).ansiCharsToColorText().withNormalizedEol()
 
-        if (output.contains("dynamicTestStream()[3]"))
+        if (output.contains("dynamicTestStream()[3]")) {
             throw new AssertionError("expected displayName for dynamic test but found array method instead");
-
-        if (!output.contains("is even"))
+        }
+        if (!output.contains("is even")) {
             throw new AssertionError("expected displayName for dynamic test but not present");
+        }
 
         then:
 
